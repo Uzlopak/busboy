@@ -1,7 +1,21 @@
 # busboy
 
+<div align="center">
+
 [![Build Status](https://github.com/fastify/busboy/workflows/ci/badge.svg)](https://github.com/fastify/busboy/actions)
 [![Coverage Status](https://coveralls.io/repos/fastify/busboy/badge.svg?branch=master)](https://coveralls.io/r/fastify/busboy?branch=master)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://standardjs.com/)
+[![Known Vulnerabilities](https://snyk.io/test/github/fastify/busboy/badge.svg)](https://snyk.io/test/github/fastify/busboy)
+[![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow.svg)](https://github.com/nodejs/security-wg/blob/HEAD/processes/responsible_disclosure_template.md)
+
+</div>
+
+<div align="center">
+
+[![NPM version](https://img.shields.io/npm/v/@fastify/busboy.svg?style=flat)](https://www.npmjs.com/package/@fastify/busboy)
+[![NPM downloads](https://img.shields.io/npm/dm/@fastify/busboy.svg?style=flat)](https://www.npmjs.com/package/@fastify/busboy)
+
+</div>
 
 Description
 ===========
@@ -11,11 +25,19 @@ A Node.js module for parsing incoming HTML form data.
 This is an officially supported fork by [fastify](https://github.com/fastify/) organization of the amazing library [originally created](https://github.com/mscdex/busboy) by Brian White,
 aimed at addressing long-standing issues with it.
 
+Benchmark (Mean time for 500 Kb payload, 2000 cycles, 1000 cycle warmup):
+
+| Library               | Mean time in nanoseconds (less is better) |
+|-----------------------|-------------------------------------------|
+| busboy 0.31           | 340114                                    |
+| @fastify/busboy 1.0.0 | 270984                                    |
+
+[Changelog](https://github.com/fastify/busboy/blob/master/CHANGELOG.md) since busboy 0.31.
 
 Requirements
 ============
 
-* [node.js](http://nodejs.org/) -- v10 or newer
+* [Node.js](http://nodejs.org/) 10+
 
 
 Install
@@ -179,6 +201,7 @@ Busboy (special) events
 * **file**(< _string_ >fieldname, < _ReadableStream_ >stream, < _string_ >filename, < _string_ >transferEncoding, < _string_ >mimeType) - Emitted for each new file form field found. `transferEncoding` contains the 'Content-Transfer-Encoding' value for the file stream. `mimeType` contains the 'Content-Type' value for the file stream.
     * Note: if you listen for this event, you should always handle the `stream` no matter if you care about the file contents or not (e.g. you can simply just do `stream.resume();` if you want to discard the contents), otherwise the 'finish' event will never fire on the Busboy instance. However, if you don't care about **any** incoming files, you can simply not listen for the 'file' event at all and any/all files will be automatically and safely discarded (these discarded files do still count towards `files` and `parts` limits).
     * If a configured file size limit was reached, `stream` will both have a boolean property `truncated` (best checked at the end of the stream) and emit a 'limit' event to notify you when this happens.
+    * The property `bytesRead` informs about the number of bytes that have been read so far.
 
 * **field**(< _string_ >fieldname, < _string_ >value, < _boolean_ >fieldnameTruncated, < _boolean_ >valueTruncated, < _string_ >transferEncoding, < _string_ >mimeType) - Emitted for each new non-file field found.
 
@@ -198,6 +221,8 @@ Busboy methods
 
         * **headers** - _object_ - These are the HTTP headers of the incoming request, which are used by individual parsers.
 
+        * **autoDestroy** - _boolean_ - Whether this stream should automatically call .destroy() on itself after ending. (Default: false).
+
         * **highWaterMark** - _integer_ - highWaterMark to use for this Busboy instance (Default: WritableStream default).
 
         * **fileHwm** - _integer_ - highWaterMark to use for file streams (Default: ReadableStream default).
@@ -205,6 +230,16 @@ Busboy methods
         * **defCharset** - _string_ - Default character set to use when one isn't defined (Default: 'utf8').
 
         * **preservePath** - _boolean_ - If paths in the multipart 'filename' field shall be preserved. (Default: false).
+
+        * **isPartAFile** - __function__ - Use this function to override the default file detection functionality. It has following parameters:
+
+            * fieldName - __string__ The name of the field.
+
+            * contentType - __string__ The content-type of the part, e.g. `text/plain`, `image/jpeg`, `application/octet-stream`
+
+            * fileName - __string__ The name of a file supplied by the part.
+
+          (Default: `(fieldName, contentType, fileName) => (contentType === 'application/octet-stream' || fileName !== undefined)`)
 
         * **limits** - _object_ - Various limits on incoming data. Valid properties are:
 
@@ -220,10 +255,18 @@ Busboy methods
 
             * **parts** - _integer_ - For multipart forms, the max number of parts (fields + files) (Default: Infinity).
 
-            * **headerPairs** - _integer_ - For multipart forms, the max number of header key=>value pairs to parse **Default:** 2000 (same as node's http).
+            * **headerPairs** - _integer_ - For multipart forms, the max number of header key=>value pairs to parse **Default:** 2000
+
+            * **headerSize** - _integer_ - For multipart forms, the max size of a multipart header **Default:** 81920.
 
     * The constructor can throw errors:
 
-        * **Unsupported content type: $type** - The `Content-Type` isn't one Busboy can parse.
+        * **Busboy expected an options-Object.** - Busboy expected an Object as first parameters.
 
-        * **Missing Content-Type** - The provided headers don't include `Content-Type` at all.
+        * **Busboy expected an options-Object with headers-attribute.** - The first parameter is lacking of a headers-attribute.
+
+        * **Limit $limit is not a valid number** - Busboy expected the desired limit to be of type number. Busboy throws this Error to prevent a potential security issue by falling silently back to the Busboy-defaults. Potential source for this Error can be the direct use of environment variables without transforming them to the type number. 
+
+        * **Unsupported Content-Type.** - The `Content-Type` isn't one Busboy can parse.
+
+        * **Missing Content-Type-header.** - The provided headers don't include `Content-Type` at all.

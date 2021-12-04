@@ -5,10 +5,10 @@
 /// <reference types="node" />
 
 import * as http from 'http';
-import {Readable, Writable} from 'stream';
+import { Readable, Writable } from 'stream';
 
-declare const busboy: BusboyConstructor;
-export default busboy
+export const Busboy: BusboyConstructor;
+export default Busboy
 
 export interface BusboyConfig {
     /**
@@ -31,6 +31,16 @@ export interface BusboyConfig {
      */
     defCharset?: string | undefined;
     /**
+     * Detect if a Part is a file.
+     * 
+     * By default a file is detected if contentType 
+     * is application/octet-stream or fileName is not
+     * undefined.
+     * 
+     * Modify this to handle e.g. Blobs.
+     */
+    isPartAFile?: (fieldName: string | undefined, contentType: string | undefined, fileName: string | undefined) => boolean;
+    /**
      * If paths in the multipart 'filename' field shall be preserved.
      * @default false
      */
@@ -39,7 +49,7 @@ export interface BusboyConfig {
      * Various limits on incoming data.
      */
     limits?:
-        | {
+    | {
         /**
          * Max field name size (in bytes)
          * @default 100 bytes
@@ -72,14 +82,31 @@ export interface BusboyConfig {
         parts?: number | undefined;
         /**
          * For multipart forms, the max number of header key=>value pairs to parse
-         * @default 2000 (same as node's http)
+         * @default 2000
          */
         headerPairs?: number | undefined;
+
+        /**
+         * For multipart forms, the max size of a header part
+         * @default 81920
+         */
+        headerSize?: number | undefined;
     }
-        | undefined;
+    | undefined;
 }
 
 export type BusboyHeaders = { 'content-type': string } & http.IncomingHttpHeaders;
+
+export interface BusboyFileStream extends
+    Readable {
+
+        truncated: boolean;
+
+        /**
+         * The number of bytes that have been read so far.
+         */
+        bytesRead: number;
+}
 
 export interface Busboy extends Writable {
     addListener<Event extends keyof BusboyEvents>(event: Event, listener: BusboyEvents[Event]): this;
@@ -128,7 +155,7 @@ export interface BusboyEvents {
      */
     file: (
         fieldname: string,
-        stream: Readable,
+        stream: BusboyFileStream,
         filename: string,
         transferEncoding: string,
         mimeType: string,

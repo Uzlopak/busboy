@@ -1,6 +1,6 @@
-import BusboyDefault, { BusboyConstructor, BusboyConfig, BusboyHeaders, Busboy, BusboyEvents } from '../..';
+import BusboyDefault, { BusboyConstructor, BusboyConfig, BusboyHeaders, Busboy, BusboyEvents, BusboyFileStream } from '../..';
 import {expectError, expectType} from "tsd";
-import {Readable} from "stream";
+import BusboyESM from "../..";
 
 // test type exports
 type Constructor = BusboyConstructor;
@@ -8,6 +8,9 @@ type Config = BusboyConfig;
 type Headers = BusboyHeaders;
 type Events = BusboyEvents;
 type BB = Busboy;
+
+expectType<Busboy>(new BusboyESM({ headers: { 'content-type': 'foo' } }));
+expectType<Busboy>(new Busboy({ headers: { 'content-type': 'foo' } }));
 
 expectError(new BusboyDefault({}));
 const busboy = BusboyDefault({ headers: { 'content-type': 'foo' } }); // $ExpectType Busboy
@@ -23,10 +26,13 @@ new BusboyDefault({ headers: { 'content-type': 'foo' }, limits: { fileSize: 200 
 new BusboyDefault({ headers: { 'content-type': 'foo' }, limits: { files: 200 } }); // $ExpectType Busboy
 new BusboyDefault({ headers: { 'content-type': 'foo' }, limits: { parts: 200 } }); // $ExpectType Busboy
 new BusboyDefault({ headers: { 'content-type': 'foo' }, limits: { headerPairs: 200 } }); // $ExpectType Busboy
+new BusboyDefault({ headers: { 'content-type': 'foo' }, limits: { headerSize: 200 } }); // $ExpectType Busboy
+new BusboyDefault({ headers: { 'content-type': 'foo' }, isPartAFile: (fieldName, contentType, fileName) => fieldName === 'my-special-field' || fileName !== 'not-so-special.txt' }); // $ExpectType Busboy
+new BusboyDefault({ headers: { 'content-type': 'foo' }, isPartAFile: (fieldName, contentType, fileName) => fileName !== undefined }); // $ExpectType Busboy
 
 busboy.addListener('file', (fieldname, file, filename, encoding, mimetype) => {
     expectType<string> (fieldname)
-    expectType<Readable>(file);
+    expectType<BusboyFileStream>(file);
     expectType<string>(filename);
     expectType<string>(encoding);
     expectType<string>(mimetype);
@@ -56,7 +62,7 @@ busboy.on(Symbol('foo'), foo => {
 
 busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
     expectType<string> (fieldname);
-    expectType<Readable> (file);
+    expectType<BusboyFileStream> (file);
     expectType<string> (filename);
     expectType<string> (encoding);
     expectType<string> (mimetype);
@@ -86,7 +92,7 @@ busboy.on(Symbol('foo'), foo => {
 
 busboy.once('file', (fieldname, file, filename, encoding, mimetype) => {
     expectType<string> (fieldname);
-    expectType<Readable> (file);
+    expectType<BusboyFileStream> (file);
     expectType<string> (filename);
     expectType<string> (encoding);
     expectType<string> (mimetype);
@@ -116,7 +122,7 @@ busboy.once(Symbol('foo'), foo => {
 
 busboy.removeListener('file', (fieldname, file, filename, encoding, mimetype) => {
     expectType<string> (fieldname);
-    expectType<Readable> (file);
+    expectType<BusboyFileStream> (file);
     expectType<string> (filename);
     expectType<string> (encoding);
     expectType<string> (mimetype);
@@ -146,7 +152,7 @@ busboy.removeListener(Symbol('foo'), foo => {
 
 busboy.off('file', (fieldname, file, filename, encoding, mimetype) => {
     expectType<string> (fieldname);
-    expectType<Readable> (file);
+    expectType<BusboyFileStream> (file);
     expectType<string> (filename);
     expectType<string> (encoding);
     expectType<string> (mimetype);
@@ -176,7 +182,7 @@ busboy.off(Symbol('foo'), foo => {
 
 busboy.prependListener('file', (fieldname, file, filename, encoding, mimetype) => {
     expectType<string> (fieldname);
-    expectType<Readable> (file);
+    expectType<BusboyFileStream> (file);
     expectType<string> (filename);
     expectType<string> (encoding);
     expectType<string> (mimetype);
@@ -206,7 +212,7 @@ busboy.prependListener(Symbol('foo'), foo => {
 
 busboy.prependOnceListener('file', (fieldname, file, filename, encoding, mimetype) => {
     expectType<string> (fieldname);
-    expectType<Readable> (file);
+    expectType<BusboyFileStream> (file);
     expectType<string> (filename);
     expectType<string> (encoding);
     expectType<string> (mimetype);
