@@ -135,7 +135,9 @@ SBMH.prototype._sbmh_feed = function (data) {
       //   looks like the beginning of the needle
       // or until
       //   pos == 0
-      while (pos < 0 && !this._sbmh_memcmp(data, pos, len - pos)) { ++pos }
+      while (pos < 0 && !this._sbmh_memcmp(data, pos, len - pos)) {
+        ++pos
+      }
     }
 
     if (pos >= 0) {
@@ -164,7 +166,7 @@ SBMH.prototype._sbmh_feed = function (data) {
 
   // Lookbehind buffer is now empty. We only need to check if the
   // needle is in the haystack.
-  const tmp = data.indexOf(needle, pos)
+  let tmp = data.indexOf(needle, pos)
   if (tmp !== -1) {
     pos = tmp
     ++this.matches
@@ -181,11 +183,14 @@ SBMH.prototype._sbmh_feed = function (data) {
   // algorithm that starts matching from the beginning instead of the end.
   // Whatever trailing data is left after running this algorithm is added to
   // the lookbehind buffer.
+  tmp = data.indexOf(needle[0], pos)
+  pos = (tmp === -1) ? len : tmp
+
   while (
     pos < len &&
     (
       data[pos] !== needle[0] ||
-      data.indexOf(needle.subarray(0, len - pos), pos) === -1
+      data.indexOf(needle.subarray(0, len - pos), pos) !== pos
     )
   ) {
     ++pos
