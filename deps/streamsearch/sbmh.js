@@ -185,7 +185,7 @@ SBMH.prototype._sbmh_feed = function (data) {
     pos < len &&
     (
       data[pos] !== needle[0] ||
-      data.indexOf(needle.subarray(0, len - pos), pos) !== pos
+      data.indexOf(needle.subarray(0, len - pos), pos) === -1
     )
   ) {
     ++pos
