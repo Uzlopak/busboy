@@ -181,9 +181,6 @@ SBMH.prototype._sbmh_feed = function (data) {
   // algorithm that starts matching from the beginning instead of the end.
   // Whatever trailing data is left after running this algorithm is added to
   // the lookbehind buffer.
-  tmp = data.indexOf(needle[0], pos)
-  pos = (tmp === -1) ? len : tmp
-
   while (
     pos < len &&
     (
