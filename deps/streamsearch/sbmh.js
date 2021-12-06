@@ -135,9 +135,7 @@ SBMH.prototype._sbmh_feed = function (data) {
       //   looks like the beginning of the needle
       // or until
       //   pos == 0
-      while (pos < 0 && !this._sbmh_memcmp(data, pos, len - pos)) {
-        ++pos
-      }
+      while (pos < 0 && !this._sbmh_memcmp(data, pos, len - pos)) { ++pos }
     }
 
     if (pos >= 0) {
