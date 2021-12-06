@@ -164,7 +164,7 @@ SBMH.prototype._sbmh_feed = function (data) {
 
   // Lookbehind buffer is now empty. We only need to check if the
   // needle is in the haystack.
-  let tmp = data.indexOf(needle, pos)
+  const tmp = data.indexOf(needle, pos)
   if (tmp !== -1) {
     pos = tmp
     ++this.matches
