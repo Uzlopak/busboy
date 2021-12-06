@@ -152,24 +152,21 @@ SBMH.prototype._sbmh_feed = function (data) {
         this.emit('info', false, this._lookbehind, 0, bytesToCutOff)
       }
 
-      this._lookbehind.copy(this._lookbehind, 0, bytesToCutOff,
-        this._lookbehind_size - bytesToCutOff)
-      this._lookbehind_size -= bytesToCutOff
-
-      data.copy(this._lookbehind, this._lookbehind_size)
-      this._lookbehind_size += len
+      data.copy(this._lookbehind, -pos)
+      this._lookbehind_size += bytesToCutOff + len
 
       this._bufpos = len
       return len
     }
   }
 
-  pos += (pos >= 0) * this._bufpos
+  pos += this._bufpos
 
   // Lookbehind buffer is now empty. We only need to check if the
   // needle is in the haystack.
-  if (data.indexOf(needle, pos) !== -1) {
-    pos = data.indexOf(needle, pos)
+  const tmp = data.indexOf(needle, pos)
+  if (tmp !== -1) {
+    pos = tmp
     ++this.matches
     if (pos > 0) { this.emit('info', true, data, this._bufpos, pos) } else { this.emit('info', true) }
 
@@ -188,18 +185,13 @@ SBMH.prototype._sbmh_feed = function (data) {
     pos < len &&
     (
       data[pos] !== needle[0] ||
-      (
-        (Buffer.compare(
-          data.subarray(pos, pos + len - pos),
-          needle.subarray(0, len - pos)
-        ) !== 0)
-      )
+      data.indexOf(needle.subarray(0, len - pos), pos) === -1
     )
   ) {
     ++pos
   }
   if (pos < len) {
-    data.copy(this._lookbehind, 0, pos, pos + (len - pos))
+    data.copy(this._lookbehind, 0, pos, len)
     this._lookbehind_size = len - pos
   }
 
